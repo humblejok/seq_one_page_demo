@@ -19,7 +19,10 @@
 		<![CDATA[
 			import mx.charts.chartClasses.IAxis;
 			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
 			import mx.events.FlexEvent;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
 			
 			import spark.collections.Sort;
 			import spark.collections.SortField;
@@ -98,6 +101,8 @@
 				
 				regionsBreakdownValues.removeAll();
 				regionsBreakdownValues.addAll(ValuesGenerator.generateBreakdown(ValuesGenerator.REGIONS));
+				
+				textService.send();
 			}
 			
 			
@@ -112,18 +117,31 @@
 			protected function renderDate(labelValue:Object, previousLabelValue:Object, axis:IAxis, labelItem:Object) : String {
 				return dateFormatter.format(labelValue);
 			}
+			
+			protected function textServiceResultHandler(event:ResultEvent) : void {
+				philosophy.text = event.result as String;
+			}
+			
+			protected function textServiceFaultHandler(event:FaultEvent) : void {
+				Alert.show("Could not load text");
+			}
+			
 		]]>
 	</fx:Script>
 	<fx:Declarations>
 		<s:NumberFormatter id="percentFormatter" fractionalDigits="2" decimalSeparator="." groupingSeparator="," useGrouping="true" errorText=""/>
 		<s:DateTimeFormatter id="dateFormatter" dateTimePattern="MMM-yy"/>
+		
+		<s:HTTPService id="textService" resultFormat="text" url="review.txt" result="textServiceResultHandler(event)" fault="textServiceFaultHandler(event)"/>
+		
+		
 	</fx:Declarations>
 	<s:layout>
 		<s:VerticalLayout paddingTop="10" paddingLeft="10" paddingRight="10" paddingBottom="10"/>
 	</s:layout>
 	<s:VGroup id="header" width="100%" horizontalAlign="center">
 		<s:Image source="{AssetsProvider.sequoia_logo}" height="196"/>
-		<s:TextInput id="productName" borderVisible="false" editable="false" text="Sequoia 5 DB Select" fontWeight="bold" fontSize="24"/>
+		<s:TextInput id="productName" borderVisible="false" editable="false" text="Sequoia Index 5 - DB Select Unleveraged" fontWeight="bold" fontSize="24" width="100%" textAlign="center"/>
 	</s:VGroup>
 	<s:HGroup id="breakdownCharts" width="100%" horizontalAlign="center">
 		<mx:PieChart id="breakdown_0" dataProvider="{stylesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="12">
@@ -142,7 +160,7 @@
 			</mx:series>
 		</mx:PieChart>
 	</s:HGroup>
-	<s:HGroup id="history" width="100%" horizontalAlign="center">
+	<s:HGroup id="history" width="100%" horizontalAlign="center" height="181">
 		<s:DataGrid id="historicalDataGrid" width="100%" height="100%" dataProvider="{yearlyPerformancesValues}" textAlign="center">
 			<s:columns>
 				<s:ArrayList>
