@@ -3,7 +3,8 @@
 			   xmlns:s="library://ns.adobe.com/flex/spark" 
 			   xmlns:mx="library://ns.adobe.com/flex/mx"
 			   minWidth="955" minHeight="600"
-			   creationComplete="creationCompleteHandler(event)">
+			   creationComplete="creationCompleteHandler(event)"
+			   textAlign="center">
 	<fx:Style>
 		@namespace s "library://ns.adobe.com/flex/spark";
 		@namespace mx "library://ns.adobe.com/flex/mx";
@@ -21,6 +22,7 @@
 			import mx.collections.ArrayCollection;
 			import mx.controls.Alert;
 			import mx.events.FlexEvent;
+			import mx.printing.FlexPrintJob;
 			import mx.rpc.events.FaultEvent;
 			import mx.rpc.events.ResultEvent;
 			
@@ -103,6 +105,9 @@
 				regionsBreakdownValues.addAll(ValuesGenerator.generateBreakdown(ValuesGenerator.REGIONS));
 				
 				textService.send();
+				disclaimerService.send();
+				mainGroup.width=1100;
+				mainGroup.height=1555;
 			}
 			
 			
@@ -122,8 +127,19 @@
 				philosophy.text = event.result as String;
 			}
 			
+			protected function disclaimerServiceResultHandler(event:ResultEvent) : void {
+				disclaimer.text = event.result as String;
+			}
+			
 			protected function textServiceFaultHandler(event:FaultEvent) : void {
 				Alert.show("Could not load text");
+			}
+			
+			protected function printClickHandler(event:MouseEvent) : void {
+				var printJob : FlexPrintJob = new FlexPrintJob();
+				printJob.start();
+				printJob.addObject(mainGroup);
+				printJob.send();
 			}
 			
 		]]>
@@ -134,69 +150,76 @@
 		
 		<s:HTTPService id="textService" resultFormat="text" url="review.txt" result="textServiceResultHandler(event)" fault="textServiceFaultHandler(event)"/>
 		
+		<s:HTTPService id="disclaimerService" resultFormat="text" url="disclaimer.txt" result="disclaimerServiceResultHandler(event)" fault="textServiceFaultHandler(event)"/>
+		
 		
 	</fx:Declarations>
-	<s:layout>
-		<s:VerticalLayout paddingTop="10" paddingLeft="10" paddingRight="10" paddingBottom="10"/>
-	</s:layout>
-	<s:VGroup id="header" width="100%" horizontalAlign="center">
-		<s:Image source="{AssetsProvider.sequoia_logo}" height="196"/>
-		<s:TextInput id="productName" borderVisible="false" editable="false" text="Sequoia Index 5 - DB Select Unleveraged" fontWeight="bold" fontSize="24" width="100%" textAlign="center"/>
+	<s:Button id="print" click="printClickHandler(event)" label="Print..."/>
+	<s:VGroup id="mainGroup" width="100%" height="100%" paddingTop="10" paddingLeft="10" paddingRight="10" paddingBottom="10">
+		<s:VGroup id="header" width="100%" horizontalAlign="center">
+			<s:Image source="{AssetsProvider.sequoia_logo}" height="196"/>
+			<s:TextInput id="productName" borderVisible="false" editable="false" text="Sequoia Index 5 - DB Select Unleveraged" fontWeight="bold" fontSize="24" width="100%" textAlign="center"/>
+		</s:VGroup>
+		<s:HGroup id="breakdownCharts" width="100%" horizontalAlign="center" height="400">
+			<mx:PieChart id="breakdown_0" dataProvider="{stylesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="12" width="33%" height="100%">
+				<mx:series>
+					<mx:PieSeries field="value" nameField="label" labelPosition="callout" labelField="label"/>
+				</mx:series>
+			</mx:PieChart>
+			<mx:PieChart id="breakdown_1" dataProvider="{strategiesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="12" width="33%" height="100%">
+				<mx:series>
+					<mx:PieSeries field="value" nameField="label" labelPosition="callout" labelField="label"/>
+				</mx:series>
+			</mx:PieChart>
+			<mx:PieChart id="breakdown_2" dataProvider="{regionsBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="12" width="33%" height="100%">
+				<mx:series>
+					<mx:PieSeries field="value" nameField="label" labelPosition="callout" labelField="label"/>
+				</mx:series>
+			</mx:PieChart>
+		</s:HGroup>
+		<s:HGroup id="history" width="100%" horizontalAlign="center" height="181">
+			<s:DataGrid id="historicalDataGrid" width="100%" height="100%" dataProvider="{yearlyPerformancesValues}" textAlign="center">
+				<s:columns>
+					<s:ArrayList>
+						<s:GridColumn headerText="" dataField="year" itemRenderer="sequoia.report.renderer.HistoricalPerformancesYearGridRenderer"/>
+						<s:GridColumn headerText="Jan" dataField="jan" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="Feb" dataField="feb" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="Mar" dataField="mar" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="Apr" dataField="apr" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="May" dataField="may" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="Jun" dataField="jun" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="Jul" dataField="jul" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="Aug" dataField="aug" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="Sep" dataField="sep" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="Oct" dataField="oct" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="Nov" dataField="nov" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="Dec" dataField="dec" labelFunction="renderPercentage"/>
+						<s:GridColumn headerText="YTD" dataField="ytd" itemRenderer="sequoia.report.renderer.HistoricalPerformancesYearToDateGridRenderer"/>
+					</s:ArrayList>
+				</s:columns>
+			</s:DataGrid>
+		</s:HGroup>
+		<s:HGroup id="summary" width="100%" horizontalAlign="center">
+			<s:TextArea id="philosophy" width="30%" height="100%" editable="false" borderVisible="false"/>
+			<s:VGroup width="70%" horizontalAlign="center">
+				<mx:LineChart id="cummulativeReturn" width="100%" height="100%" showDataTips="true">
+					<mx:horizontalAxis>
+						<mx:CategoryAxis id="datesAxis" dataProvider="{historicalNAVValues}" categoryField="date" labelFunction="renderDate"/>
+					</mx:horizontalAxis>
+					<mx:horizontalAxisRenderers>
+						<mx:AxisRenderer canDropLabels="true" axis="{datesAxis}" labelRotation="90" fontFamily="myVerdana" fontSize="12"/>
+					</mx:horizontalAxisRenderers>
+					<mx:series>
+						<mx:LineSeries yField="value" displayName="Product" dataProvider="{historicalNAVValues}"/>
+						<mx:LineSeries yField="value" displayName="Benchmark" dataProvider="{benchmarkNAVValues}"/>
+					</mx:series>
+				</mx:LineChart>
+				<mx:Legend dataProvider="{cummulativeReturn}" labelPlacement="bottom" direction="horizontal" textAlign="center"/>
+			</s:VGroup>
+		</s:HGroup>
+		<s:HGroup id="footer" width="100%" horizontalAlign="left">
+			<s:TextArea id="disclaimer" width="100%" height="100%" fontFamily="myVerdana" fontSize="10" text="This is the disclaimer, put any legal stuff in here..." textAlign="left"/>
+		</s:HGroup>
 	</s:VGroup>
-	<s:HGroup id="breakdownCharts" width="100%" horizontalAlign="center">
-		<mx:PieChart id="breakdown_0" dataProvider="{stylesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="12">
-			<mx:series>
-				<mx:PieSeries field="value" nameField="label" labelPosition="callout" labelField="label"/>
-			</mx:series>
-		</mx:PieChart>
-		<mx:PieChart id="breakdown_1" dataProvider="{strategiesBreakdownValues}">
-			<mx:series>
-				<mx:PieSeries field="value" nameField="label" labelPosition="callout" labelField="label"/>
-			</mx:series>
-		</mx:PieChart>
-		<mx:PieChart id="breakdown_2" dataProvider="{regionsBreakdownValues}">
-			<mx:series>
-				<mx:PieSeries field="value" nameField="label" labelPosition="callout" labelField="label"/>
-			</mx:series>
-		</mx:PieChart>
-	</s:HGroup>
-	<s:HGroup id="history" width="100%" horizontalAlign="center" height="181">
-		<s:DataGrid id="historicalDataGrid" width="100%" height="100%" dataProvider="{yearlyPerformancesValues}" textAlign="center">
-			<s:columns>
-				<s:ArrayList>
-					<s:GridColumn headerText="" dataField="year" itemRenderer="sequoia.report.renderer.HistoricalPerformancesYearGridRenderer"/>
-					<s:GridColumn headerText="Jan" dataField="jan" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="Feb" dataField="feb" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="Mar" dataField="mar" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="Apr" dataField="apr" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="May" dataField="may" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="Jun" dataField="jun" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="Jul" dataField="jul" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="Aug" dataField="aug" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="Sep" dataField="sep" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="Oct" dataField="oct" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="Nov" dataField="nov" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="Dec" dataField="dec" labelFunction="renderPercentage"/>
-					<s:GridColumn headerText="YTD" dataField="ytd" itemRenderer="sequoia.report.renderer.HistoricalPerformancesYearToDateGridRenderer"/>
-				</s:ArrayList>
-			</s:columns>
-		</s:DataGrid>
-	</s:HGroup>
-	<s:HGroup id="summary" width="100%" horizontalAlign="center">
-		<s:TextArea id="philosophy" width="30%" height="100%" editable="false" borderVisible="false"/>
-		<mx:LineChart id="cummulativeReturn" width="70%" height="100%" showDataTips="true" >
-			<mx:horizontalAxis>
-				<mx:CategoryAxis id="datesAxis" dataProvider="{historicalNAVValues}" categoryField="date" labelFunction="renderDate"/>
-			</mx:horizontalAxis>
-			<mx:horizontalAxisRenderers>
-				<mx:AxisRenderer canDropLabels="true" axis="{datesAxis}" labelRotation="90" fontFamily="myVerdana" fontSize="12"/>
-			</mx:horizontalAxisRenderers>
-			<mx:series>
-				<mx:LineSeries yField="value" displayName="Product" dataProvider="{historicalNAVValues}"/>
-				<mx:LineSeries yField="value" displayName="Benchmark" dataProvider="{benchmarkNAVValues}"/>
-			</mx:series>
-		</mx:LineChart>
-	</s:HGroup>
-	<s:HGroup id="footer" width="100%" horizontalAlign="center">
-	</s:HGroup>
+
 </s:Application>
