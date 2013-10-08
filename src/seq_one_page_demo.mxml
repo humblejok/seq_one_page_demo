@@ -4,7 +4,8 @@
 			   xmlns:mx="library://ns.adobe.com/flex/mx"
 			   minWidth="955" minHeight="600"
 			   creationComplete="creationCompleteHandler(event)"
-			   textAlign="center">
+			   textAlign="center"
+			   skinClass="org.jok.flex.utility.widget.CustomScrollingApplicationSkin">
 	<fx:Style>
 		@namespace s "library://ns.adobe.com/flex/spark";
 		@namespace mx "library://ns.adobe.com/flex/mx";
@@ -31,6 +32,7 @@
 			
 			import org.jok.flex.utility.date.DateCalculationUtil;
 			
+			import sequoia.report.model.QuantitativeToken;
 			import sequoia.report.model.ValueToken;
 			import sequoia.report.model.YearToken;
 			import sequoia.report.utility.AssetsProvider;
@@ -50,6 +52,9 @@
 			
 			[Bindable]
 			protected var yearlyPerformancesValues : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var yearlyBenchmarkValues : ArrayCollection = new ArrayCollection();
 
 			[Bindable]
 			protected var stylesBreakdownValues : ArrayCollection = new ArrayCollection();
@@ -59,10 +64,16 @@
 			
 			[Bindable]
 			protected var regionsBreakdownValues : ArrayCollection = new ArrayCollection();
+
+			[Bindable]
+			protected var statisticInfo : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var end : Date;
 			
 			protected function creationCompleteHandler(event:FlexEvent):void {
 				var start : Date = new Date(2008,0,31);
-				var end : Date = new Date(2013,8,30);
+				end = new Date(2013,8,30);
 				historicalPerformancesValues.removeAll();
 				historicalNAVValues.removeAll();
 				historicalPerformancesValues.addAll(ValuesGenerator.generateHistory(start,end));
@@ -86,6 +97,9 @@
 				yearlyPerformancesValues.removeAll();
 				yearlyPerformancesValues.addAll(ValuesGenerator.makeYearlyInformation(historicalPerformancesValues));
 				
+				yearlyBenchmarkValues.removeAll();
+				yearlyBenchmarkValues.addAll(ValuesGenerator.makeYearlyInformation(benchmarkPerformancesValues));
+				
 				var sortField : SortField = new SortField();
 				sortField.name = "year";
 				sortField.numeric = true;
@@ -104,10 +118,13 @@
 				regionsBreakdownValues.removeAll();
 				regionsBreakdownValues.addAll(ValuesGenerator.generateBreakdown(ValuesGenerator.REGIONS));
 				
+				statisticInfo.removeAll();
+				statisticInfo.addAll(new ArrayCollection(ValuesGenerator.computeStatistics(historicalPerformancesValues, benchmarkPerformancesValues,yearlyPerformancesValues, yearlyBenchmarkValues).toArray()));
+				
 				textService.send();
 				disclaimerService.send();
-				mainGroup.width=1100;
-				mainGroup.height=1555;
+				mainGroup.width=1600;
+				mainGroup.height=2261;
 			}
 			
 			
@@ -124,7 +141,7 @@
 			}
 			
 			protected function textServiceResultHandler(event:ResultEvent) : void {
-				philosophy.text = event.result as String;
+				//philosophy.text = event.result as String;
 			}
 			
 			protected function disclaimerServiceResultHandler(event:ResultEvent) : void {
@@ -147,6 +164,7 @@
 	<fx:Declarations>
 		<s:NumberFormatter id="percentFormatter" fractionalDigits="2" decimalSeparator="." groupingSeparator="," useGrouping="true" errorText=""/>
 		<s:DateTimeFormatter id="dateFormatter" dateTimePattern="MMM-yy"/>
+		<s:DateTimeFormatter id="monthFormatter" dateTimePattern="MMMM yyyy"/>
 		
 		<s:HTTPService id="textService" resultFormat="text" url="review.txt" result="textServiceResultHandler(event)" fault="textServiceFaultHandler(event)"/>
 		
@@ -154,29 +172,59 @@
 		
 		
 	</fx:Declarations>
-	<s:Button id="print" click="printClickHandler(event)" label="Print..."/>
+	<s:Button label="Print" click="printClickHandler(event)"/>
 	<s:VGroup id="mainGroup" width="100%" height="100%" paddingTop="10" paddingLeft="10" paddingRight="10" paddingBottom="10">
-		<s:VGroup id="header" width="100%" horizontalAlign="center">
-			<s:Image source="{AssetsProvider.sequoia_logo}" height="196"/>
-			<s:TextInput id="productName" borderVisible="false" editable="false" text="Sequoia Index 5 - DB Select Unleveraged" fontWeight="bold" fontSize="24" width="100%" textAlign="center"/>
-		</s:VGroup>
-		<s:HGroup id="breakdownCharts" width="100%" horizontalAlign="center" height="400">
-			<mx:PieChart id="breakdown_0" dataProvider="{stylesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="12" width="33%" height="100%">
-				<mx:series>
-					<mx:PieSeries field="value" nameField="label" labelPosition="callout" labelField="label"/>
-				</mx:series>
-			</mx:PieChart>
-			<mx:PieChart id="breakdown_1" dataProvider="{strategiesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="12" width="33%" height="100%">
-				<mx:series>
-					<mx:PieSeries field="value" nameField="label" labelPosition="callout" labelField="label"/>
-				</mx:series>
-			</mx:PieChart>
-			<mx:PieChart id="breakdown_2" dataProvider="{regionsBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="12" width="33%" height="100%">
-				<mx:series>
-					<mx:PieSeries field="value" nameField="label" labelPosition="callout" labelField="label"/>
-				</mx:series>
-			</mx:PieChart>
+		<s:HGroup id="header" width="100%" height="460" horizontalAlign="center" verticalAlign="bottom">
+			<s:Spacer width="20%"/>
+			<s:VGroup id="mainHeader" width="60%" verticalAlign="bottom" height="100%">
+				<s:Image source="{AssetsProvider.sequoia_logo}" width="100%" height="100%"/>
+				<s:TextInput id="productName" borderVisible="false" editable="false" text="Sequoia Index 5 - DB Select Unleveraged" fontWeight="bold" fontSize="36" width="100%" textAlign="center"/>
+			</s:VGroup>
+			<s:TextInput id="month" text="{monthFormatter.format(end).toUpperCase()}" width="20%" textAlign="right" editable="false" borderVisible="false" fontWeight="bold" fontSize="36"/>
 		</s:HGroup>
+		<s:VGroup id="subHeader" width="100%" fontWeight="normal" fontSize="20">
+			<s:HGroup id="subHeaderFirstRow" width="100%" verticalAlign="middle">
+				<s:Label width="15%" textAlign="left" text="Time Horizon:"/>
+				<s:TextInput id="timeHorizon" width="15%" textAlign="left" editable="false" borderVisible="false" text="6+ Years"/>
+				<s:Label width="10%" textAlign="left" text="Goal:"/>
+				<s:TextInput id="goal" width="60%" textAlign="left" editable="false" borderVisible="false" text="Long-term capital appreciation and above average exposure to markets risk and returns"/>
+			</s:HGroup>
+			<s:HGroup id="subHeaderSecondRow" width="100%" verticalAlign="middle">
+				<s:Label width="15%" textAlign="left" text="Risk Tolerance:"/>
+				<s:TextInput id="riskTolerance" width="15%" textAlign="left" editable="false" borderVisible="false" text="High"/>
+				<s:Label width="10%" textAlign="left" text="Keys:"/>
+				<s:TextInput id="keys" width="60%" textAlign="left" editable="false" borderVisible="false" text="Dynamic asset allocation, transparency, liquidity"/>
+			</s:HGroup>
+		</s:VGroup>
+		<s:Spacer width="100%" height="32"/>
+		<s:HGroup id="breakdownCharts" width="100%" horizontalAlign="center" height="460">
+			<s:VGroup width="33%" height="100%">
+				<s:Label text="Styles breakdown" width="100%" textAlign="center" fontWeight="bold" fontSize="20"/>
+				<mx:PieChart id="breakdown_0" dataProvider="{stylesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
+					<mx:series>
+						<mx:PieSeries field="value" nameField="label" labelPosition="inside" labelField="label"/>
+					</mx:series>
+				</mx:PieChart>
+			</s:VGroup>
+			<s:VGroup width="33%" height="100%">
+				<s:Label text="Strategies breakdown" width="100%" textAlign="center" fontWeight="bold" fontSize="20"/>
+				<mx:PieChart id="breakdown_1" dataProvider="{strategiesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
+					<mx:series>
+						<mx:PieSeries field="value" nameField="label" labelPosition="inside" labelField="label"/>
+					</mx:series>
+				</mx:PieChart>
+			</s:VGroup>
+			<s:VGroup width="33%" height="100%">
+				<s:Label text="Regions breakdown" width="100%" textAlign="center" fontWeight="bold" fontSize="20"/>
+				<mx:PieChart id="breakdown_2" dataProvider="{regionsBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
+					<mx:series>
+						<mx:PieSeries field="value" nameField="label" labelPosition="inside" labelField="label"/>
+					</mx:series>
+				</mx:PieChart>
+			</s:VGroup>
+		</s:HGroup>
+		<s:Spacer width="100%" height="32"/>
+		<s:Label fontWeight="bold" fontSize="20" text="Monthly Returns"/>
 		<s:HGroup id="history" width="100%" horizontalAlign="center" height="181">
 			<s:DataGrid id="historicalDataGrid" width="100%" height="100%" dataProvider="{yearlyPerformancesValues}" textAlign="center">
 				<s:columns>
@@ -200,7 +248,14 @@
 			</s:DataGrid>
 		</s:HGroup>
 		<s:HGroup id="summary" width="100%" horizontalAlign="center">
-			<s:TextArea id="philosophy" width="30%" height="100%" editable="false" borderVisible="false"/>
+			<s:DataGrid id="statistics" width="30%" height="100%" dataProvider="{statisticInfo}">
+				<s:columns>
+					<s:ArrayList>
+						<s:GridColumn dataField="label"/>
+						<s:GridColumn dataField="value" labelFunction="renderPercentage"/>
+					</s:ArrayList>
+				</s:columns>
+			</s:DataGrid>
 			<s:VGroup width="70%" horizontalAlign="center">
 				<mx:LineChart id="cummulativeReturn" width="100%" height="100%" showDataTips="true">
 					<mx:horizontalAxis>

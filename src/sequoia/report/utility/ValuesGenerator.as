@@ -5,6 +5,7 @@ package sequoia.report.utility
 	import org.jok.flex.utility.date.DateCalculationUtil;
 	
 	import sequoia.report.model.BreakdownToken;
+	import sequoia.report.model.QuantitativeToken;
 	import sequoia.report.model.ValueToken;
 	import sequoia.report.model.YearToken;
 
@@ -13,8 +14,7 @@ package sequoia.report.utility
 		public static var STYLES : Array = ['Event Driven', 'Convertible Arbitrage','Emerging markets','Dedicated Short Bias', 'Global Macro','Managed Futures', 'Long/Short Equity', 'Real Estate', 'Commodities', 'Fixed Income Arbitrage'];
 		public static var STRATEGIES : Array = ['Volatility Arbitrage','Statistical Arbitrage','Credit Arbitrage','Market Neutral','Convertible Arbitrage'];
 		public static var REGIONS : Array = ['Europe','Asia','LATAM', 'Japan', 'North America', 'USA', 'Africa', 'India','Italy','Greece'];
-		
-		
+
 		public static function generateHistory(startDate : Date, endDate : Date) : ArrayCollection {
 			var results : ArrayCollection = new ArrayCollection()
 			var workDate : Date = DateCalculationUtil.getEndOfMonth(startDate);
@@ -68,6 +68,62 @@ package sequoia.report.utility
 			token.label = source[result.length];
 			token.value = 1.0 - sum;
 			result.addItem(token);
+			return result;
+		}
+		
+		public static function computeStatistics(product : ArrayCollection, benchmark : ArrayCollection, yearly : ArrayCollection, benchYearly : ArrayCollection) : QuantitativeToken {
+			var result : QuantitativeToken = new QuantitativeToken();
+			var months : Number = 0.0;
+			result.avgMonthlyReturn = 0.0;
+			result.avgAnnualReturn = 0.0;
+			result.avgMonthlyAlpha = 0.0;
+			result.avgAnnualAlpha = 0.0;
+			result.last12Month = 0.0;
+			result.totalReturn = 0.0;
+			result.volatility = 0.0;			
+			
+			for(var i : Number = 0;i<product.length;i++) {
+				if (i>=product.length-12) {
+					result.last12Month = ((result.last12Month + 1.0) * (product.getItemAt(i).value + 1.0)) - 1.0
+				}
+				result.totalReturn = ((result.last12Month + 1.0) * (product.getItemAt(i).value + 1.0)) - 1.0
+			}
+			
+			for each(var yt : YearToken in yearly) {
+				result.avgAnnualReturn += yt.ytd;
+				for each (var m : String in YearToken.MONTHS) {
+					if (yt.hasOwnProperty(m)) {
+						months += 1.0;
+						result.avgMonthlyReturn += yt[m];
+					}
+					
+				}
+			}
+			
+			for each(yt in benchYearly) {
+				result.avgAnnualAlpha += yt.ytd;
+				for each(m in YearToken.MONTHS) {
+					if (yt.hasOwnProperty(m)) {
+						result.avgMonthlyAlpha += yt[m];
+					}
+				}
+			}
+			
+			result.avgMonthlyReturn /= months;
+			result.avgAnnualReturn /= yearly.length;
+			result.avgMonthlyAlpha /= months;
+			result.avgAnnualAlpha /= yearly.length;
+			result.avgMonthlyAlpha = result.avgMonthlyReturn - result.avgMonthlyAlpha;
+			result.avgAnnualAlpha = result.avgAnnualReturn - result.avgAnnualAlpha;
+			
+			for each(var vt : ValueToken in product) {
+				result.volatility += Math.pow(vt.value - result.avgMonthlyReturn,2);
+			}
+			
+			result.volatility /= months;
+			result.volatility = Math.sqrt(result.volatility);
+			
+			result.yearToDate = YearToken(yearly.getItemAt(yearly.length-1)).ytd;
 			return result;
 		}
 		
