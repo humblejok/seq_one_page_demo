@@ -74,20 +74,39 @@ package sequoia.report.utility
 		public static function computeStatistics(product : ArrayCollection, benchmark : ArrayCollection, yearly : ArrayCollection, benchYearly : ArrayCollection) : QuantitativeToken {
 			var result : QuantitativeToken = new QuantitativeToken();
 			var months : Number = 0.0;
+			
+			var negativeMonths : Number = 0.0;
+			var positiveMonths : Number = 0.0;
+			var positiveMean : Number = 0.0;
+			var negativeMean : Number = 0.0;
+			
 			result.avgMonthlyReturn = 0.0;
 			result.avgAnnualReturn = 0.0;
 			result.avgMonthlyAlpha = 0.0;
 			result.avgAnnualAlpha = 0.0;
 			result.last12Month = 0.0;
 			result.totalReturn = 0.0;
-			result.volatility = 0.0;			
+			result.volatility = 0.0;	
+			result.downsideVolatility = 0.0;
+			result.upsideVolatility = 0.0;
+			result.monthToDate = product.getItemAt(product.length-1).value;
 			
 			for(var i : Number = 0;i<product.length;i++) {
+				if (product.getItemAt(i).value<0.0) {
+					negativeMonths += 1.0;
+					negativeMean -= product.getItemAt(i).value;
+				} else {
+					positiveMonths += 1.0;
+					positiveMean += product.getItemAt(i).value;
+				}
 				if (i>=product.length-12) {
 					result.last12Month = ((result.last12Month + 1.0) * (product.getItemAt(i).value + 1.0)) - 1.0
 				}
 				result.totalReturn = ((result.last12Month + 1.0) * (product.getItemAt(i).value + 1.0)) - 1.0
 			}
+			
+			positiveMean /= positiveMonths;
+			negativeMean /= negativeMonths;
 			
 			for each(var yt : YearToken in yearly) {
 				result.avgAnnualReturn += yt.ytd;
@@ -118,10 +137,21 @@ package sequoia.report.utility
 			
 			for each(var vt : ValueToken in product) {
 				result.volatility += Math.pow(vt.value - result.avgMonthlyReturn,2);
+				if (vt.value<0.0) {
+					result.downsideVolatility += Math.pow(vt.value - negativeMean,2);
+				} else {
+					result.upsideVolatility += Math.pow(vt.value - positiveMean,2);
+				}
 			}
 			
 			result.volatility /= months;
+			result.upsideVolatility/= positiveMonths;
+			result.downsideVolatility/= negativeMonths;
+			
 			result.volatility = Math.sqrt(result.volatility);
+			result.upsideVolatility = Math.sqrt(result.upsideVolatility);
+			result.downsideVolatility = Math.sqrt(result.downsideVolatility);
+			
 			
 			result.yearToDate = YearToken(yearly.getItemAt(yearly.length-1)).ytd;
 			return result;

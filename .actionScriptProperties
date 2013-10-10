@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<actionScriptProperties analytics="false" mainApplicationPath="seq_one_page_demo.mxml" projectUUID="fef3af84-efd4-4c6b-b9f8-3ded1b218102" version="11">
-  <compiler additionalCompilerArguments="-locale en_US" autoRSLOrdering="true" copyDependentFiles="true" fteInMXComponents="false" generateAccessible="true" htmlExpressInstall="true" htmlGenerate="true" htmlHistoryManagement="true" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderPath="bin-debug" removeUnusedRSL="true" sourceFolderPath="src" strict="true" targetPlayerVersion="0.0.0" useApolloConfig="false" useDebugRSLSwfs="true" useFlashSDK="false" verifyDigests="true" warn="true">
+<actionScriptProperties analytics="false" mainApplicationPath="reporting.mxml" projectUUID="fef3af84-efd4-4c6b-b9f8-3ded1b218102" version="11">
+  <compiler additionalCompilerArguments="-locale en_US -includes sequoia.report.view.SimpleOnePageReportView sequoia.report.helper.SimpleOnePageReportViewHelper" autoRSLOrdering="true" copyDependentFiles="true" fteInMXComponents="false" generateAccessible="true" htmlExpressInstall="true" htmlGenerate="true" htmlHistoryManagement="true" htmlPlayerVersionCheck="true" includeNetmonSwc="false" outputFolderLocation="C:/DEV/Workspaces/Python/seq_repository/static/reporting" outputFolderPath="bin-debug" removeUnusedRSL="true" rootURL="http://localhost:8000/static/reporting" sourceFolderPath="src" strict="true" targetPlayerVersion="0.0.0" useApolloConfig="false" useDebugRSLSwfs="true" useFlashSDK="false" verifyDigests="true" warn="true">
     <compilerSourcePath/>
-    <libraryPath defaultLinkType="0">
+    <libraryPath defaultLinkType="3">
       <libraryPathEntry kind="4" path="">
         <excludedEntries>
           <libraryPathEntry kind="3" linkType="1" path="${PROJECT_FRAMEWORKS}/libs/flex.swc" useDefaultLinkType="false"/>
@@ -10,11 +10,17 @@
         </excludedEntries>
       </libraryPathEntry>
       <libraryPathEntry kind="1" linkType="1" path="libs"/>
+      <libraryPathEntry applicationDomain="default" forceLoad="false" kind="3" linkType="4" path="/LIB - Application Builder/bin/LIB - Application Builder.swc" useDefaultLinkType="false">
+        <crossDomainRsls>
+          <crossDomainRslEntry autoExtract="true" policyFileUrl="" rslUrl="LIB - Application Builder.swf"/>
+        </crossDomainRsls>
+      </libraryPathEntry>
+      <libraryPathEntry kind="3" linkType="1" path="/LIB - Flex Utilities/bin/LIB - Flex Utilities.swc" useDefaultLinkType="false"/>
     </libraryPath>
     <sourceAttachmentPath/>
   </compiler>
   <applications>
-    <application path="seq_one_page_demo.mxml"/>
+    <application path="reporting.mxml"/>
   </applications>
   <modules/>
   <workers/>

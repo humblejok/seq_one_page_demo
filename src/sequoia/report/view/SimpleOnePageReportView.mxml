@@ -1,0 +1,355 @@
+<?xml version="1.0" encoding="utf-8"?>
+<view:XMLVGroup xmlns:fx="http://ns.adobe.com/mxml/2009" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:mx="library://ns.adobe.com/flex/mx"
+		  width="100%" height="100%" creationComplete="creationCompleteHandler(event)" xmlns:view="org.jok.flex.application.view.*" horizontalAlign="center">
+	<fx:Style>
+		@namespace s "library://ns.adobe.com/flex/spark";
+		@namespace mx "library://ns.adobe.com/flex/mx";
+		@font-face{
+			src: url("/../assets/verdana.ttf");
+			fontFamily: myVerdana;
+			embedAsCFF: false; 
+		}
+	</fx:Style>
+	<fx:Declarations>
+		<s:NumberFormatter id="percentFormatter" fractionalDigits="2" decimalSeparator="." groupingSeparator="," useGrouping="true" errorText=""/>
+		<s:DateTimeFormatter id="dateFormatter" dateTimePattern="MMM-yy"/>
+		<s:DateTimeFormatter id="monthFormatter" dateTimePattern="MMMM yyyy"/>
+		
+		<s:HTTPService id="investmentService" resultFormat="text" url="review.txt" result="investmentServiceResultHandler(event)" fault="textServiceFaultHandler(event)"/>
+		<s:HTTPService id="contactService" resultFormat="text" url="contact.txt" result="contactServiceResultHandler(event)" fault="textServiceFaultHandler(event)"/>
+		
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.charts.chartClasses.IAxis;
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.FlexEvent;
+			import mx.printing.FlexPrintJob;
+			import mx.rpc.events.FaultEvent;
+			import mx.rpc.events.ResultEvent;
+			
+			import spark.collections.Sort;
+			import spark.collections.SortField;
+			
+			import org.jok.flex.utility.date.DateCalculationUtil;
+			
+			import sequoia.report.model.ValueToken;
+			import sequoia.report.model.YearToken;
+			import sequoia.report.utility.AssetsProvider;
+			import sequoia.report.utility.ValuesGenerator;
+			
+			[Bindable]
+			public var portfoliosList : ArrayCollection;
+			
+			[Bindable]
+			public var indicesList : ArrayCollection;
+			
+			[Bindable]
+			protected var historicalPerformancesValues : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var historicalNAVValues : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var benchmarkPerformancesValues : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var benchmarkNAVValues : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var yearlyPerformancesValues : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var yearlyBenchmarkValues : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var stylesBreakdownValues : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var strategiesBreakdownValues : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var regionsBreakdownValues : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var statisticInfo : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var volatilityInfo : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var marketInfo : ArrayCollection = new ArrayCollection();
+			
+			[Bindable]
+			protected var endPeriodDate : Date;
+			
+			protected function creationCompleteHandler(event:FlexEvent):void {
+				var startPeriodDate : Date = new Date(2008,0,31);
+				endPeriodDate = new Date(2013,8,30);
+				historicalPerformancesValues.removeAll();
+				historicalNAVValues.removeAll();
+				historicalPerformancesValues.addAll(ValuesGenerator.generateHistory(startPeriodDate,endPeriodDate));
+				var previousToken : ValueToken = new ValueToken(DateCalculationUtil.getEndOfPreviousMonth(startPeriodDate),100.0);
+				for each (var token : ValueToken in historicalPerformancesValues) {
+					var navToken : ValueToken = new ValueToken(token.date, previousToken.value * (1.0 + token.value));
+					historicalNAVValues.addItem(navToken);
+					previousToken = navToken;
+				}
+				
+				benchmarkPerformancesValues.removeAll();
+				benchmarkNAVValues.removeAll();
+				benchmarkPerformancesValues.addAll(ValuesGenerator.generateHistory(startPeriodDate,endPeriodDate));
+				previousToken = new ValueToken(DateCalculationUtil.getEndOfPreviousMonth(startPeriodDate),100.0);
+				for each (token in benchmarkPerformancesValues) {
+					navToken = new ValueToken(token.date, previousToken.value * (1.0 + token.value));
+					benchmarkNAVValues.addItem(navToken);
+					previousToken = navToken;
+				}
+				
+				yearlyPerformancesValues.removeAll();
+				yearlyPerformancesValues.addAll(ValuesGenerator.makeYearlyInformation(historicalPerformancesValues));
+				
+				yearlyBenchmarkValues.removeAll();
+				yearlyBenchmarkValues.addAll(ValuesGenerator.makeYearlyInformation(benchmarkPerformancesValues));
+				
+				var allStatistics : Array = ValuesGenerator.computeStatistics(historicalPerformancesValues, benchmarkPerformancesValues,yearlyPerformancesValues, yearlyBenchmarkValues).toArray();
+				
+				statisticInfo.removeAll();
+				statisticInfo.addAll(new ArrayCollection(allStatistics.slice(0,6)));
+				
+				volatilityInfo.removeAll();
+				volatilityInfo.addAll(new ArrayCollection(allStatistics.slice(6,9)));
+				
+				marketInfo.removeAll();
+				marketInfo.addAll(new ArrayCollection(allStatistics.slice(9,11)));
+				
+				var sortField : SortField = new SortField();
+				sortField.name = "year";
+				sortField.numeric = true;
+				sortField.descending = true;
+				var yearSort: Sort = new Sort();
+				yearSort.fields = [sortField];
+				yearlyPerformancesValues.sort = yearSort;
+				yearlyPerformancesValues.refresh();
+				
+				stylesBreakdownValues.removeAll();
+				stylesBreakdownValues.addAll(ValuesGenerator.generateBreakdown(ValuesGenerator.STYLES));
+				
+				strategiesBreakdownValues.removeAll();
+				strategiesBreakdownValues.addAll(ValuesGenerator.generateBreakdown(ValuesGenerator.STRATEGIES));
+				
+				regionsBreakdownValues.removeAll();
+				regionsBreakdownValues.addAll(ValuesGenerator.generateBreakdown(ValuesGenerator.REGIONS));
+				
+				investmentService.send();
+				contactService.send();
+				this.height=2261;
+				
+			}
+			
+			
+			protected function renderPercentage(data : YearToken, column : GridColumn) : String {
+				var result : String = percentFormatter.format(data[column.dataField] * 100.0);
+				if (result=="") {
+					return result;
+				}
+				return result + "%";
+			}
+			
+			protected function renderStatistic(data : Object, column : GridColumn) : String {
+				var result : String = percentFormatter.format(data[column.dataField] * 100.0);
+				if (result=="") {
+					return result;
+				}
+				return result + "%";
+			}
+			
+			protected function renderDate(labelValue:Object, previousLabelValue:Object, axis:IAxis, labelItem:Object) : String {
+				return dateFormatter.format(labelValue);
+			}
+			
+			protected function investmentServiceResultHandler(event:ResultEvent) : void {
+				investmentTeam.text = event.result as String;
+			}
+			
+			protected function contactServiceResultHandler(event:ResultEvent) : void {
+				contact.text = event.result as String
+			}
+			
+			protected function textServiceFaultHandler(event:FaultEvent) : void {
+				Alert.show("Could not load text");
+			}
+			
+			protected function printClickHandler(event:MouseEvent) : void {
+				var printJob : FlexPrintJob = new FlexPrintJob();
+				printJob.start();
+				printJob.addObject(this);
+				printJob.send();
+			}
+			
+			protected function portfolioLabelFunction(pf : Object) : String {
+				return pf.fields.portfolio_name;
+			}
+			
+			protected function indexLabelFunction(pf : Object) : String {
+				return pf.fields.security_name;
+			}
+			
+		]]>
+	</fx:Script>
+	<s:HGroup width="1600" verticalAlign="middle">
+		<s:Label text="Select portfolio:" fontWeight="bold"/>
+		<s:DropDownList id="portfolioSelection" dataProvider="{portfoliosList}" labelFunction="portfolioLabelFunction" width="500"/>
+		<s:Label text="Select index:" fontWeight="bold"/>
+		<s:DropDownList id="indexSelection" width="500" dataProvider="{indicesList}" labelFunction="indexLabelFunction"/>
+		<s:Label text="Date:" fontWeight="bold"/>
+		<mx:DateField id="reportDate"/>
+	</s:HGroup>
+	<s:Panel width="1600" height="2261">
+		<s:VGroup width="100%" height="100%" paddingLeft="10" paddingRight="10">
+			<s:HGroup id="header" width="100%" height="460" horizontalAlign="center" verticalAlign="bottom">
+				<s:Spacer width="20%"/>
+				<s:VGroup id="mainHeader" width="60%" verticalAlign="bottom" height="100%">
+					<s:Image source="{AssetsProvider.sequoia_logo}" width="100%" height="100%"/>
+					<s:TextInput id="productName" borderVisible="false" editable="false" text="Sequoia Index 5 - DB Select Unleveraged" fontWeight="bold" fontSize="36" width="100%" textAlign="center"/>
+				</s:VGroup>
+				<s:TextInput id="month" text="{monthFormatter.format(endPeriodDate).toUpperCase()}" width="20%" textAlign="right" editable="false" borderVisible="false" fontWeight="bold" fontSize="30"/>
+			</s:HGroup>
+			<s:VGroup id="subHeader" width="100%" fontWeight="normal" fontSize="20">
+				<s:HGroup id="subHeaderFirstRow" width="100%" verticalAlign="middle">
+					<s:Label width="15%" textAlign="left" text="Time Horizon:"/>
+					<s:TextInput id="timeHorizon" width="15%" textAlign="left" editable="false" borderVisible="false" text="6+ Years"/>
+					<s:Label width="10%" textAlign="left" text="Goal:"/>
+					<s:TextInput id="goal" width="60%" textAlign="left" editable="false" borderVisible="false" text="Long-term capital appreciation and above average exposure to markets risk and returns"/>
+				</s:HGroup>
+				<s:HGroup id="subHeaderSecondRow" width="100%" verticalAlign="middle">
+					<s:Label width="15%" textAlign="left" text="Risk Tolerance:"/>
+					<s:TextInput id="riskTolerance" width="15%" textAlign="left" editable="false" borderVisible="false" text="High"/>
+					<s:Label width="10%" textAlign="left" text="Keys:"/>
+					<s:TextInput id="keys" width="60%" textAlign="left" editable="false" borderVisible="false" text="Dynamic asset allocation, transparency, liquidity"/>
+				</s:HGroup>
+			</s:VGroup>
+			<s:Spacer width="100%" height="32"/>
+			<s:HGroup id="breakdownCharts" width="100%" horizontalAlign="center" height="460">
+				<s:VGroup width="33%" height="100%">
+					<s:Label text="Styles breakdown" width="100%" textAlign="center" fontWeight="bold" fontSize="24"/>
+					<mx:PieChart id="breakdown_0" dataProvider="{stylesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
+						<mx:series>
+							<mx:PieSeries field="value" nameField="label" labelPosition="inside" labelField="label"/>
+						</mx:series>
+					</mx:PieChart>
+				</s:VGroup>
+				<s:VGroup width="33%" height="100%">
+					<s:Label text="Strategies breakdown" width="100%" textAlign="center" fontWeight="bold" fontSize="24"/>
+					<mx:PieChart id="breakdown_1" dataProvider="{strategiesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
+						<mx:series>
+							<mx:PieSeries field="value" nameField="label" labelPosition="inside" labelField="label"/>
+						</mx:series>
+					</mx:PieChart>
+				</s:VGroup>
+				<s:VGroup width="33%" height="100%">
+					<s:Label text="Regions breakdown" width="100%" textAlign="center" fontWeight="bold" fontSize="24"/>
+					<mx:PieChart id="breakdown_2" dataProvider="{regionsBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
+						<mx:series>
+							<mx:PieSeries field="value" nameField="label" labelPosition="inside" labelField="label"/>
+						</mx:series>
+					</mx:PieChart>
+				</s:VGroup>
+			</s:HGroup>
+			<s:Spacer width="100%" height="32"/>
+			<s:Label fontWeight="bold" fontSize="24" text="Monthly Returns"/>
+			<s:HGroup id="history" width="100%" horizontalAlign="center" height="169">
+				<s:DataGrid id="historicalDataGrid" width="100%" height="100%" dataProvider="{yearlyPerformancesValues}" textAlign="center">
+					<s:columns>
+						<s:ArrayList>
+							<s:GridColumn headerText="" dataField="year" itemRenderer="sequoia.report.renderer.HistoricalPerformancesYearGridRenderer"/>
+							<s:GridColumn headerText="Jan" dataField="jan" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="Feb" dataField="feb" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="Mar" dataField="mar" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="Apr" dataField="apr" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="May" dataField="may" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="Jun" dataField="jun" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="Jul" dataField="jul" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="Aug" dataField="aug" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="Sep" dataField="sep" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="Oct" dataField="oct" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="Nov" dataField="nov" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="Dec" dataField="dec" labelFunction="renderPercentage"/>
+							<s:GridColumn headerText="YTD" dataField="ytd" itemRenderer="sequoia.report.renderer.HistoricalPerformancesYearToDateGridRenderer"/>
+						</s:ArrayList>
+					</s:columns>
+				</s:DataGrid>
+			</s:HGroup>
+			<s:Spacer width="100%" height="32"/>
+			<s:HGroup id="summary" width="100%" horizontalAlign="center">
+				<s:VGroup width="28%" height="100%">
+					<s:Label fontWeight="bold" fontSize="24" text="Returns &amp; Statistics"/>
+					<s:DataGrid id="statistics" width="100%" dataProvider="{statisticInfo}" skinClass="org.jok.flex.utility.skin.BottomOnlyDataGridSkin" textAlign="left" height="170">
+						<s:columns>
+							<s:ArrayList>
+								<s:GridColumn dataField="label" width="{statistics.width * 0.78}"/>
+								<s:GridColumn dataField="value" labelFunction="renderStatistic" itemRenderer="sequoia.report.renderer.StatisticGridColumnRenderer" width="{statistics.width * 0.2}"/>
+							</s:ArrayList>
+						</s:columns>
+					</s:DataGrid>
+					<s:Spacer width="100%" height="32"/>
+					<s:DataGrid id="volatilities" width="100%" dataProvider="{volatilityInfo}" skinClass="org.jok.flex.utility.skin.BottomOnlyDataGridSkin" textAlign="left" height="90">
+						<s:columns>
+							<s:ArrayList>
+								<s:GridColumn dataField="label" width="{statistics.width * 0.78}"/>
+								<s:GridColumn dataField="value" labelFunction="renderStatistic" itemRenderer="sequoia.report.renderer.StatisticGridColumnRenderer" width="{statistics.width * 0.2}"/>
+							</s:ArrayList>
+						</s:columns>
+					</s:DataGrid>
+					<s:Spacer width="100%" height="32"/>
+					<s:Label fontWeight="bold" fontSize="24" text="Over the market"/>
+					<s:DataGrid id="overMarket" width="100%" dataProvider="{marketInfo}" skinClass="org.jok.flex.utility.skin.BottomOnlyDataGridSkin" textAlign="left" height="60">
+						<s:columns>
+							<s:ArrayList>
+								<s:GridColumn dataField="label" width="{statistics.width * 0.78}"/>
+								<s:GridColumn dataField="value" labelFunction="renderStatistic" itemRenderer="sequoia.report.renderer.StatisticGridColumnRenderer" width="{statistics.width * 0.2}"/>
+							</s:ArrayList>
+						</s:columns>
+					</s:DataGrid>
+				</s:VGroup>
+				<s:Spacer width="12%"/>
+				<s:VGroup width="70%" horizontalAlign="center" height="100%">
+					<s:Label fontWeight="bold" fontSize="24" text="Model versus Market" width="100%" textAlign="center"/>
+					<mx:LineChart id="cummulativeReturn" width="100%" height="100%" showDataTips="true">
+						<mx:horizontalAxis>
+							<mx:CategoryAxis id="datesAxis" dataProvider="{historicalNAVValues}" categoryField="date" labelFunction="renderDate"/>
+						</mx:horizontalAxis>
+						<mx:horizontalAxisRenderers>
+							<mx:AxisRenderer canDropLabels="true" axis="{datesAxis}" labelRotation="90" fontFamily="myVerdana" fontSize="12"/>
+						</mx:horizontalAxisRenderers>
+						<mx:series>
+							<mx:LineSeries yField="value" displayName="Product" dataProvider="{historicalNAVValues}"/>
+							<mx:LineSeries yField="value" displayName="Benchmark" dataProvider="{benchmarkNAVValues}"/>
+						</mx:series>
+					</mx:LineChart>
+					<mx:Legend dataProvider="{cummulativeReturn}" labelPlacement="bottom" direction="horizontal" textAlign="center"/>
+				</s:VGroup>
+			</s:HGroup>
+			<s:Spacer width="100%" height="32"/>
+			<s:VGroup id="footer" width="100%" textAlign="center">
+				<s:HGroup width="100%" height="150">
+					<s:VGroup width="40%">
+						<s:Label fontWeight="bold" fontSize="24" text="The investment team" textAlign="left"/>
+						<s:TextArea id="investmentTeam" width="100%" height="80%" editable="false" borderVisible="false" textAlign="left" fontSize="14"/>
+					</s:VGroup>
+					<s:Spacer width="25%"/>
+					<s:VGroup width="35%">
+						<s:Label fontWeight="bold" fontSize="24" text="Contact" textAlign="left"/>
+						<s:TextArea id="contact" width="100%" height="80%" editable="false" borderVisible="false" textAlign="left" fontSize="14"/>
+					</s:VGroup>
+				</s:HGroup>
+				<s:HGroup width="100%">
+					<s:Spacer width="100%"/>
+					<s:Image source="{AssetsProvider.sam_logo}" height="100" width="412"/>
+					<s:Spacer width="100%"/>
+				</s:HGroup>
+			</s:VGroup>
+		</s:VGroup>
+	</s:Panel>
+</view:XMLVGroup>

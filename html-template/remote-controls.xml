@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<remotecontrols>
+	<remoteobjects />
+	<httpservices>
+		<httpservice>
+			<name>portfoliosList</name>
+			<url>/portfolios_sam_list/</url>
+			<resultformat>json</resultformat>
+		</httpservice>
+		<httpservice>
+			<name>portfolio_performances</name>
+			<url>/portfolio_performances/</url>
+			<resultformat>json</resultformat>
+		</httpservice>
+		<httpservice>
+			<name>indicesList</name>
+			<url>/indices_list/</url>
+			<resultformat>json</resultformat>
+		</httpservice>
+	</httpservices>
+</remotecontrols>

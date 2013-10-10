@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:GridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					xmlns:s="library://ns.adobe.com/flex/spark" 
+					xmlns:mx="library://ns.adobe.com/flex/mx" clipAndEnableScrolling="true">
+	<fx:Declarations>
+		<s:NumberFormatter id="percentFormatter" fractionalDigits="2" decimalSeparator="." groupingSeparator="," useGrouping="true" errorText=""/>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			override public function set data(value : Object) : void {
+				super.data = value;
+				if (super.data!=null) {
+					var valueStr : String = percentFormatter.format(data[column.dataField] * 100.0);
+					lblData.text = valueStr + "%";
+				}
+			}
+		]]>
+	</fx:Script>
+	
+	<s:HGroup width="100%" height="100%" >
+		<s:Label id="lblData" textAlign="right" width="100%" height="100%" verticalAlign="middle"/>
+	</s:HGroup>
+	
+</s:GridItemRenderer>
