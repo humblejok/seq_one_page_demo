@@ -18,9 +18,6 @@
 			import mx.collections.ArrayCollection;
 			import mx.events.FlexEvent;
 			
-			import spark.collections.Sort;
-			import spark.collections.SortField;
-			
 			import sequoia.report.helper.SimpleOnePageReportViewHelper;
 			import sequoia.report.utility.AssetsProvider;
 			import sequoia.report.utility.ValuesGenerator;
@@ -42,10 +39,6 @@
 			
 			[Bindable]
 			protected var regionsBreakdownValues : ArrayCollection = new ArrayCollection();
-			
-		
-			[Bindable]
-			protected var endPeriodDate : Date;
 			
 			protected function creationCompleteHandler(event:FlexEvent):void {
 				castedHelper = SimpleOnePageReportViewHelper(this.helper);
@@ -89,9 +82,9 @@
 				<s:Spacer width="20%"/>
 				<s:VGroup id="mainHeader" width="60%" verticalAlign="bottom" height="100%">
 					<s:Image source="{AssetsProvider.sequoia_logo}" width="100%" height="100%"/>
-					<s:TextInput id="productName" borderVisible="false" editable="false" text="Sequoia Index 5 - DB Select Unleveraged" fontWeight="bold" fontSize="36" width="100%" textAlign="center"/>
+					<s:TextInput id="productName" borderVisible="false" editable="false" text="{portfolioSelection.selectedItem.fields.portfolio_name}" fontWeight="bold" fontSize="26" width="100%" textAlign="center"/>
 				</s:VGroup>
-				<s:TextInput id="month" text="{castedHelper.monthFormatter.format(endPeriodDate).toUpperCase()}" width="20%" textAlign="right" editable="false" borderVisible="false" fontWeight="bold" fontSize="30"/>
+				<s:TextInput id="month" text="{castedHelper.monthFormatter.format(castedHelper.endDate).toUpperCase()}" width="20%" textAlign="right" editable="false" borderVisible="false" fontWeight="bold" fontSize="26"/>
 			</s:HGroup>
 			<s:VGroup id="subHeader" width="100%" fontWeight="normal" fontSize="20">
 				<s:HGroup id="subHeaderFirstRow" width="100%" verticalAlign="middle">

@@ -237,7 +237,7 @@ package sequoia.report.helper
 			}
 						
 			computeStatistics();
-			
+			assignDisplaySort();
 
 		}
 		
