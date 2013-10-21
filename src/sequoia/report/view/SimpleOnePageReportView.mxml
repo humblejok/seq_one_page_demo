@@ -20,7 +20,6 @@
 			
 			import sequoia.report.helper.SimpleOnePageReportViewHelper;
 			import sequoia.report.utility.AssetsProvider;
-			import sequoia.report.utility.ValuesGenerator;
 			
 			[Bindable]
 			public var castedHelper : SimpleOnePageReportViewHelper;
@@ -30,29 +29,9 @@
 			
 			[Bindable]
 			public var indicesList : ArrayCollection;
-			
-			[Bindable]
-			protected var stylesBreakdownValues : ArrayCollection = new ArrayCollection();
-			
-			[Bindable]
-			protected var strategiesBreakdownValues : ArrayCollection = new ArrayCollection();
-			
-			[Bindable]
-			protected var regionsBreakdownValues : ArrayCollection = new ArrayCollection();
-			
+
 			protected function creationCompleteHandler(event:FlexEvent):void {
 				castedHelper = SimpleOnePageReportViewHelper(this.helper);
-				
-				
-				stylesBreakdownValues.removeAll();
-				stylesBreakdownValues.addAll(ValuesGenerator.generateBreakdown(ValuesGenerator.STYLES));
-				
-				strategiesBreakdownValues.removeAll();
-				strategiesBreakdownValues.addAll(ValuesGenerator.generateBreakdown(ValuesGenerator.STRATEGIES));
-				
-				regionsBreakdownValues.removeAll();
-				regionsBreakdownValues.addAll(ValuesGenerator.generateBreakdown(ValuesGenerator.REGIONS));
-				
 				castedHelper.investmentService.send();
 				castedHelper.contactService.send();
 				this.height=2261;
@@ -78,33 +57,36 @@
 	</s:HGroup>
 	<s:Panel width="1600" height="2261">
 		<s:VGroup id="printArea" width="100%" height="100%" paddingLeft="10" paddingRight="10">
-			<s:HGroup id="header" width="100%" height="460" horizontalAlign="center" verticalAlign="bottom">
-				<s:Spacer width="20%"/>
-				<s:VGroup id="mainHeader" width="60%" verticalAlign="bottom" height="100%">
-					<s:Image source="{AssetsProvider.sequoia_logo}" width="100%" height="100%"/>
-					<s:TextInput id="productName" borderVisible="false" editable="false" text="{portfolioSelection.selectedItem.fields.portfolio_name}" fontWeight="bold" fontSize="26" width="100%" textAlign="center"/>
-				</s:VGroup>
-				<s:TextInput id="month" text="{castedHelper.monthFormatter.format(castedHelper.endDate).toUpperCase()}" width="20%" textAlign="right" editable="false" borderVisible="false" fontWeight="bold" fontSize="26"/>
-			</s:HGroup>
-			<s:VGroup id="subHeader" width="100%" fontWeight="normal" fontSize="20">
+			<s:VGroup width="100%" height="310">
+				<s:HGroup id="header" width="100%" height="250" horizontalAlign="center" verticalAlign="bottom">
+					<s:HGroup id="mainHeader" width="100%" verticalAlign="top" horizontalAlign="right" height="100%">
+						<s:Image source="{AssetsProvider.sequoia_logo}" height="100%"/>
+						<s:TextInput id="month" text="{castedHelper.monthFormatter.format(castedHelper.endDate).toUpperCase()}" width="27%" textAlign="right" editable="true" borderVisible="false" fontWeight="bold" fontSize="26"  paddingTop="20"/>
+					</s:HGroup>
+				</s:HGroup>
+				<s:HGroup width="100%" horizontalAlign="center" verticalAlign="top">
+					<s:TextInput id="productName" borderVisible="false" editable="true" text="{portfolioSelection.selectedItem.fields.portfolio_name}" fontWeight="bold" fontSize="32" width="100%" textAlign="center"/>
+				</s:HGroup>
+			</s:VGroup>
+			<s:VGroup id="subHeader" width="100%" fontWeight="normal" fontSize="20" verticalAlign="middle">
 				<s:HGroup id="subHeaderFirstRow" width="100%" verticalAlign="middle">
 					<s:Label width="15%" textAlign="left" text="Time Horizon:"/>
-					<s:TextInput id="timeHorizon" width="15%" textAlign="left" editable="false" borderVisible="false" text="6+ Years"/>
+					<s:TextInput id="timeHorizon" width="15%" textAlign="left" editable="true" borderVisible="false" text="" maxChars="16"/>
 					<s:Label width="10%" textAlign="left" text="Goal:"/>
-					<s:TextInput id="goal" width="60%" textAlign="left" editable="false" borderVisible="false" text="Long-term capital appreciation and above average exposure to markets risk and returns"/>
+					<s:TextInput id="goal" width="60%" textAlign="left" editable="true" borderVisible="false" text="" maxChars="96"/>
 				</s:HGroup>
 				<s:HGroup id="subHeaderSecondRow" width="100%" verticalAlign="middle">
 					<s:Label width="15%" textAlign="left" text="Risk Tolerance:"/>
-					<s:TextInput id="riskTolerance" width="15%" textAlign="left" editable="false" borderVisible="false" text="High"/>
+					<s:TextInput id="riskTolerance" width="15%" textAlign="left" editable="true" borderVisible="false" text="" maxChars="16"/>
 					<s:Label width="10%" textAlign="left" text="Keys:"/>
-					<s:TextInput id="keys" width="60%" textAlign="left" editable="false" borderVisible="false" text="Dynamic asset allocation, transparency, liquidity"/>
+					<s:TextInput id="keys" width="60%" textAlign="left" editable="true" borderVisible="false" text="" maxChars="96"/>
 				</s:HGroup>
 			</s:VGroup>
 			<s:Spacer width="100%" height="32"/>
 			<s:HGroup id="breakdownCharts" width="100%" horizontalAlign="center" height="460">
 				<s:VGroup width="33%" height="100%">
 					<s:Label text="Styles breakdown" width="100%" textAlign="center" fontWeight="bold" fontSize="24"/>
-					<mx:PieChart id="breakdown_0" dataProvider="{stylesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
+					<mx:PieChart id="breakdown_0" dataProvider="{castedHelper.stylesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
 						<mx:series>
 							<mx:PieSeries field="value" nameField="label" labelPosition="inside" labelField="label"/>
 						</mx:series>
@@ -112,7 +94,7 @@
 				</s:VGroup>
 				<s:VGroup width="33%" height="100%">
 					<s:Label text="Strategies breakdown" width="100%" textAlign="center" fontWeight="bold" fontSize="24"/>
-					<mx:PieChart id="breakdown_1" dataProvider="{strategiesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
+					<mx:PieChart id="breakdown_1" dataProvider="{castedHelper.strategiesBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
 						<mx:series>
 							<mx:PieSeries field="value" nameField="label" labelPosition="inside" labelField="label"/>
 						</mx:series>
@@ -120,9 +102,9 @@
 				</s:VGroup>
 				<s:VGroup width="33%" height="100%">
 					<s:Label text="Regions breakdown" width="100%" textAlign="center" fontWeight="bold" fontSize="24"/>
-					<mx:PieChart id="breakdown_2" dataProvider="{regionsBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
+					<mx:PieChart id="breakdown_2" dataProvider="{castedHelper.regionsBreakdownValues}" showDataTips="true" fontFamily="myVerdana" fontSize="16" width="100%" height="100%">
 						<mx:series>
-							<mx:PieSeries field="value" nameField="label" labelPosition="inside" labelField="label"/>
+							<mx:PieSeries field="value" nameField="label" labelPosition="insideWithCallout" labelField="label"/>
 						</mx:series>
 					</mx:PieChart>
 				</s:VGroup>
@@ -153,49 +135,52 @@
 			</s:HGroup>
 			<s:Spacer width="100%" height="32"/>
 			<s:HGroup id="summary" width="100%" horizontalAlign="center">
-				<s:VGroup width="28%" height="100%">
+				<s:VGroup width="33%" height="100%" fontSize="20">
 					<s:Label fontWeight="bold" fontSize="24" text="Returns &amp; Statistics"/>
-					<s:DataGrid id="statistics" width="100%" dataProvider="{castedHelper.statisticInfo}" skinClass="org.jok.flex.utility.skin.BottomOnlyDataGridSkin" textAlign="left" height="170">
+					<s:DataGrid id="statistics" width="100%" dataProvider="{castedHelper.statisticInfo}" skinClass="org.jok.flex.utility.skin.BottomOnlyDataGridSkin" textAlign="left" height="220">
 						<s:columns>
 							<s:ArrayList>
-								<s:GridColumn dataField="label" width="{statistics.width * 0.78}"/>
-								<s:GridColumn dataField="value" labelFunction="{castedHelper.renderStatistic}" itemRenderer="sequoia.report.renderer.StatisticGridColumnRenderer" width="{statistics.width * 0.2}"/>
+								<s:GridColumn dataField="label" width="{statistics.width * 0.62}"/>
+								<s:GridColumn dataField="value" labelFunction="{castedHelper.renderStatistic}" itemRenderer="sequoia.report.renderer.StatisticGridColumnRenderer" width="{statistics.width * 0.35}"/>
 							</s:ArrayList>
 						</s:columns>
 					</s:DataGrid>
 					<s:Spacer width="100%" height="32"/>
-					<s:DataGrid id="volatilities" width="100%" dataProvider="{castedHelper.volatilityInfo}" skinClass="org.jok.flex.utility.skin.BottomOnlyDataGridSkin" textAlign="left" height="90">
+					<s:DataGrid id="volatilities" width="100%" dataProvider="{castedHelper.volatilityInfo}" skinClass="org.jok.flex.utility.skin.BottomOnlyDataGridSkin" textAlign="left" height="110">
 						<s:columns>
 							<s:ArrayList>
-								<s:GridColumn dataField="label" width="{statistics.width * 0.78}"/>
-								<s:GridColumn dataField="value" labelFunction="{castedHelper.renderStatistic}" itemRenderer="sequoia.report.renderer.StatisticGridColumnRenderer" width="{statistics.width * 0.2}"/>
+								<s:GridColumn dataField="label" width="{statistics.width * 0.65}"/>
+								<s:GridColumn dataField="value" labelFunction="{castedHelper.renderStatistic}" itemRenderer="sequoia.report.renderer.StatisticGridColumnRenderer" width="{statistics.width * 0.33}"/>
 							</s:ArrayList>
 						</s:columns>
 					</s:DataGrid>
 					<s:Spacer width="100%" height="32"/>
 					<s:Label fontWeight="bold" fontSize="24" text="Over the market"/>
-					<s:DataGrid id="overMarket" width="100%" dataProvider="{castedHelper.marketInfo}" skinClass="org.jok.flex.utility.skin.BottomOnlyDataGridSkin" textAlign="left" height="60">
+					<s:DataGrid id="overMarket" width="100%" dataProvider="{castedHelper.marketInfo}" skinClass="org.jok.flex.utility.skin.BottomOnlyDataGridSkin" textAlign="left" height="80">
 						<s:columns>
 							<s:ArrayList>
-								<s:GridColumn dataField="label" width="{statistics.width * 0.78}"/>
-								<s:GridColumn dataField="value" labelFunction="{castedHelper.renderStatistic}" itemRenderer="sequoia.report.renderer.StatisticGridColumnRenderer" width="{statistics.width * 0.2}"/>
+								<s:GridColumn dataField="label" width="{statistics.width * 0.65}"/>
+								<s:GridColumn dataField="value" labelFunction="{castedHelper.renderStatistic}" itemRenderer="sequoia.report.renderer.StatisticGridColumnRenderer" width="{statistics.width * 0.33}"/>
 							</s:ArrayList>
 						</s:columns>
 					</s:DataGrid>
 				</s:VGroup>
-				<s:Spacer width="12%"/>
-				<s:VGroup width="70%" horizontalAlign="center" height="100%">
+				<s:Spacer width="2%"/>
+				<s:VGroup width="65%" horizontalAlign="center" height="100%">
 					<s:Label fontWeight="bold" fontSize="24" text="Model versus Market" width="100%" textAlign="center"/>
 					<mx:LineChart id="cummulativeReturn" width="100%" height="100%" showDataTips="true">
 						<mx:horizontalAxis>
 							<mx:CategoryAxis id="datesAxis" dataProvider="{castedHelper.historicalNAVValues}" categoryField="date" labelFunction="{castedHelper.renderDate}"/>
 						</mx:horizontalAxis>
+						<mx:verticalAxis>
+							<mx:LinearAxis id="valuesAxis" labelFunction="{castedHelper.renderPercent}"/>
+						</mx:verticalAxis>
 						<mx:horizontalAxisRenderers>
 							<mx:AxisRenderer canDropLabels="true" axis="{datesAxis}" labelRotation="90" fontFamily="myVerdana" fontSize="12"/>
 						</mx:horizontalAxisRenderers>
 						<mx:series>
-							<mx:LineSeries yField="value" displayName="{portfolioSelection.selectedItem.fields.portfolio_name}" dataProvider="{castedHelper.historicalNAVValues}"/>
-							<mx:LineSeries yField="value" displayName="{indexSelection.selectedItem.fields.security_name}" dataProvider="{castedHelper.benchmarkNAVValues}"/>
+							<mx:LineSeries yField="value" xField="date" displayName="{portfolioSelection.selectedItem.fields.portfolio_name}" dataProvider="{castedHelper.historicalNAVValues}"/>
+							<mx:LineSeries yField="value" xField="date" displayName="{indexSelection.selectedItem.fields.security_name}" dataProvider="{castedHelper.benchmarkNAVValues}"/>
 						</mx:series>
 					</mx:LineChart>
 					<mx:Legend dataProvider="{cummulativeReturn}" labelPlacement="bottom" direction="horizontal" textAlign="center"/>
@@ -203,15 +188,15 @@
 			</s:HGroup>
 			<s:Spacer width="100%" height="32"/>
 			<s:VGroup id="footer" width="100%" textAlign="center">
-				<s:HGroup width="100%" height="150">
+				<s:HGroup width="100%" height="200">
 					<s:VGroup width="40%">
-						<s:Label fontWeight="bold" fontSize="24" text="The investment team" textAlign="left"/>
-						<s:TextArea id="investmentTeam" width="100%" height="80%" editable="false" borderVisible="false" textAlign="left" fontSize="14" text="{castedHelper.investmentTeam}"/>
+						<s:Label fontWeight="bold" fontSize="20" text="The investment team" textAlign="left"/>
+						<s:TextArea id="investmentTeam" width="100%" height="80%" editable="false" borderVisible="false" textAlign="left" fontSize="20" text="{castedHelper.investmentTeam}"/>
 					</s:VGroup>
-					<s:Spacer width="25%"/>
-					<s:VGroup width="35%">
-						<s:Label fontWeight="bold" fontSize="24" text="Contact" textAlign="left"/>
-						<s:TextArea id="contact" width="100%" height="80%" editable="false" borderVisible="false" textAlign="left" fontSize="14" text="{castedHelper.contact}"/>
+					<s:Spacer width="18%"/>
+					<s:VGroup width="42%">
+						<s:Label fontWeight="bold" fontSize="20" text="Contact" textAlign="left"/>
+						<s:TextArea id="contact" width="100%" height="80%" editable="false" borderVisible="false" textAlign="left" fontSize="20" text="{castedHelper.contact}"/>
 					</s:VGroup>
 				</s:HGroup>
 				<s:HGroup width="100%">

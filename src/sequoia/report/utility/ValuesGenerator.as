@@ -102,7 +102,7 @@ package sequoia.report.utility
 				if (i>=product.length-12) {
 					result.last12Month = ((result.last12Month + 1.0) * (product.getItemAt(i).value + 1.0)) - 1.0
 				}
-				result.totalReturn = ((result.last12Month + 1.0) * (product.getItemAt(i).value + 1.0)) - 1.0
+				result.totalReturn = ((result.totalReturn + 1.0) * (product.getItemAt(i).value + 1.0)) - 1.0
 			}
 			
 			positiveMean /= positiveMonths;

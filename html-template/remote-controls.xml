@@ -18,6 +18,16 @@
 			<resultformat>json</resultformat>
 		</httpservice>
 		<httpservice>
+			<name>portfolioBreakdown</name>
+			<url>/portfolio_breakdown/</url>
+			<post>
+				<arg>portfolio_id</arg>
+				<arg>query_date</arg>
+				<arg>breakdown</arg>
+			</post>
+			<resultformat>json</resultformat>
+		</httpservice>
+		<httpservice>
 			<name>indicesList</name>
 			<url>/indices_list/</url>
 			<resultformat>json</resultformat>
@@ -29,6 +39,24 @@
 				<arg>start_date</arg>
 				<arg>end_date</arg>
 				<arg>security_id</arg>
+			</post>
+			<resultformat>json</resultformat>
+		</httpservice>
+		<httpservice>
+			<name>createPortfolioAnnotation</name>
+			<url>/create_portfolio_annotation/</url>
+			<post>
+				<arg>annotations</arg>
+			</post>
+			<resultformat>json</resultformat>
+		</httpservice>
+		<httpservice>
+			<name>portfolioAnnotation</name>
+			<url>/portfolio_annotation/</url>
+			<post>
+				<arg>portfolio_id</arg>
+				<arg>query_date</arg>
+				<arg>target</arg>
 			</post>
 			<resultformat>json</resultformat>
 		</httpservice>
